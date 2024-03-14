@@ -3,12 +3,12 @@ use std::{
 };
 
 pub struct ProcessData {
-    pid: u16,
-    filename: String,
-    state: char,
-    parent_pid: u16,
-    nice: i16,//TODO check whats faster, using signed int or just doing +20 at storing and -20 at using
-    starttime: u64
+    pub pid: u16,
+    pub filename: String,
+    pub state: char,
+    pub parent_pid: u16,
+    pub nice: i16,//TODO check whats faster, using signed int or just doing +20 at storing and -20 at using
+    pub starttime: u64
 }
 
 pub fn read_data() -> Vec<ProcessData> {
@@ -36,9 +36,6 @@ pub fn read_data() -> Vec<ProcessData> {
             if !md.is_file() {
                 continue;
             }
-
-            //println!("{}", task_path.to_string_lossy());
-
             
             let contents = fs::read_to_string(task_path).expect("reading file failed");
 
@@ -48,7 +45,6 @@ pub fn read_data() -> Vec<ProcessData> {
             let pid: u16 = entries[0].parse().unwrap();
             let filename = entries[1].clone(); // Fix so it parses everything between (), not just 2nd element
             let state: char = entries[2].clone().chars().next().expect("string is empty");
-            println!("{}", entries[3].clone());
             let parent_pid: u16 = entries[3].parse().ok().unwrap_or(0);
             let nice = entries[18].parse().unwrap();
             let starttime = entries[21].parse().unwrap();
@@ -63,11 +59,6 @@ pub fn read_data() -> Vec<ProcessData> {
             };
 
             processes.push(process_data); // Add data to the processes vector
-
-            println!("");
-            for entry in entries {
-            //    print!("{} ", entry)
-            }
         }
     }
     return processes;
