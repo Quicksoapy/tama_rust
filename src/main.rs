@@ -7,13 +7,9 @@ use crossterm::{
     ExecutableCommand,
 };
 use ratatui::{
-    prelude::{CrosstermBackend, Stylize, Terminal},
-    widgets::Paragraph,
+    layout::Rect, prelude::{CrosstermBackend, Stylize, Terminal}, widgets::Paragraph
 };
 use std::io::{stdout, Result};
-
-use core::time;
-use std::thread::sleep;
 
 mod data_reader;
 
@@ -26,17 +22,33 @@ fn main() -> Result<()> {
         terminal.clear()?;
 
         loop {
-            let data: Vec<data_reader::ProcessData> = data_reader::read_data();    
+            let data: Vec<data_reader::ProcessData> = data_reader::read_data();
 
             terminal.draw(|frame|{
                 let area = frame.size();
-                for process in data {
-                    let line = 
-                    process.pid.to_string() + " " + &process.parent_pid.to_string() + " " + &process.filename + " " + &process.state.to_string() + &process.nice.to_string() + &process.starttime.to_string();
-                    frame.render_widget(Paragraph::new(line).white().on_blue(), area);
+                // Calculate the height required for each process line
+                let line_height = 1;
+                let available_height = area.height as usize;
+                let num_lines = data.len().min(available_height / line_height);
+                let header_line = "PID Parent_PID Filename State Nice Starttime";
+                let vertical_scroll = 0; // from app state
+
+                for (i, process) in data.iter().take(num_lines).enumerate() {   
+                    let line = format!(
+                        "{} {} {} {} {} {}",
+                        process.pid, process.parent_pid, process.filename, 
+                        process.state, process.nice, process.starttime
+                    );
+                frame.render_widget(Paragraph::new(items.clone())
+                .scroll((vertical_scroll as u16, 0))
+                .block(Block::new().borders(Borders::RIGHT)), frame.size());
+                frame.render_widget(Paragraph::new(header_line).white().on_black(), Rect::new(area.left(), area.top(), area.width, line_height as u16));
+                
+                // Calculate the vertical position for each line
+                let y_position = area.top() + i as u16 * line_height as u16;
+                frame.render_widget(Paragraph::new(line).white().on_blue(), Rect::new(area.left(), y_position, area.width, line_height as u16));
                 }
             })?;
-
 
             //handle events here too:
             if event::poll(std::time::Duration::from_millis(4))? {
